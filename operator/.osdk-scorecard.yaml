@@ -1,0 +1,17 @@
+scorecard:
+  # Setting a global scorecard option
+  output: json
+  plugins:
+    # `basic` tests configured to test 2 CRs
+    - basic:
+        cr-manifest:
+          - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
+          # - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+    
+    # OLM tests may only test one CR
+    # - olm:
+    #     cr-manifest:
+    #       - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
+    #       # - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+    #     csv-path: "deploy/olm-catalog/cass-operator/1.0.0/cass-operator.v1.0.0.clusterserviceversion.yaml"
+        
