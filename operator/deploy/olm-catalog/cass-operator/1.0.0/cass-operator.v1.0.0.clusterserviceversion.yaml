@@ -4,15 +4,15 @@ metadata:
   annotations:
     alm-examples: >-
       [{"apiVersion": "cassandra.datastax.com/v1beta1","kind": "CassandraDatacenter","metadata": {"name": "dc1"},"spec": {"clusterName": "cluster1","size": 3,"racks": [{"name": "rack1","zone": "us-central1-a"},{"name": "rack2","zone": "us-central1-b"},{"name": "rack3","zone": "us-central1-c"}],"resources": {"requests": {"memory": "24Gi","cpu": "6000m"},"limits": {"memory": "24Gi","cpu": "6000m"}},"storageConfig": {"cassandraDataVolumeClaimSpec": {"storageClassName": "server-storage","accessModes": ["ReadWriteOnce"],"resources": {"requests": {"storage": "1000Gi"}}}},"allowMultipleNodesPerWorker": false,"stopped": false,"rollingRestartRequested": false,"canaryUpgrade": false,"serverType": "dse","serverVersion": "6.8.0","serverImage": "registry.connect.redhat.com/datastax/dse-server:6.8.0","configBuilderImage": "registry.connect.redhat.com/datastax/cass-config-builder:1.0.0","superuserSecretName": "","managementApiAuth": {"insecure": {}},"serviceAccount": "default","replaceNodes": []}}]
-    categories: Database
+    categories: Database,Big Data,OpenShift Optional
     description: >
       Simple provisioning, turn-key operations, and automated remediation of
       Apache Cassandra clusters
-    containerImage: datastax/cass-operator
-    support: ''
+    containerImage: registry.connect.redhat.com/datastax/cass-operator:1.0.0
+    support: 'DataStax'
     capabilities: Auto Pilot
     repository: 'https://github.com/datastax/cass-operator'
-    createdAt: ""
+    createdAt: "2020-03-31"
     certified: "false"
   name: cass-operator.v1.0.0
   namespace: placeholder
