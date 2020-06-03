@@ -8,13 +8,13 @@ metadata:
     description: >
       Simple provisioning, turn-key operations, and automated remediation of
       Apache Cassandra clusters
-    containerImage: registry.connect.redhat.com/datastax/cass-operator:1.0.0
+    containerImage: registry.connect.redhat.com/datastax/cass-operator:1.1.0
     support: 'DataStax'
     capabilities: Auto Pilot
     repository: 'https://github.com/datastax/cass-operator'
-    createdAt: "2020-03-31"
+    createdAt: "2020-05-28"
     certified: "false"
-  name: cass-operator.v1.0.0
+  name: cass-operator.v1.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -42,9 +42,6 @@ spec:
           - kind: Service
             version: v1
             name: ""
-          - kind: StatefulSet
-            version: v1beta1
-            name: ""
           - kind: Secret
             version: v1
             name: ""
@@ -59,6 +56,9 @@ spec:
             name: ""
           - kind: PodDisruptionBudget
             version: v1beta1
+            name: ""
+          - kind: StatefulSet
+            version: v1
             name: ""
           - kind: Event
             version: v1
@@ -171,6 +171,13 @@ spec:
             displayName: Superuser Secret Name
             x-descriptors:
               - urn:alm:descriptor:io.kubernetes:Secret
+          
+          - path: nodeSelector
+            description: |
+              Selector for identifying which nodes the DC pods should be deployed on.
+            displayName: Node Selector
+            x-descriptors: 
+              - urn:alm:descriptor:com.tectonic.ui:text
           
           - path: allowMultipleNodesPerWorker
             description: |
@@ -291,7 +298,6 @@ spec:
   description: >
     ## Apache Cassandra
 
-
     The Apache Cassandra database is the right choice when you need scalability
     and high availability without compromising performance. Linear scalability
     and proven fault-tolerance on commodity hardware or cloud infrastructure
@@ -341,65 +347,130 @@ spec:
 
 
     ## Pre-requisites
+    
+    ### WebHook Secret
 
+    ```
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cass-operator-webhook-config
+    data:
+      tls.crt: ""
+      tls.key: ""
+    ```
 
-    Currently there are no pre-requisites to install the operator. 
+    ### WebHook Configuration
+
+    ```
+    apiVersion: admissionregistration.k8s.io/v1beta1
+    kind: ValidatingWebhookConfiguration
+    metadata:
+      name: "cassandradatacenter-webhook-registration"
+    webhooks:
+    - name: "cassandradatacenter-webhook.cassandra.datastax.com"
+      rules:
+      - apiGroups:   ["cassandra.datastax.com"]
+        apiVersions: ["v1beta1"]
+        operations:  ["CREATE", "UPDATE", "DELETE"]
+        resources:   ["cassandradatacenters"]
+        scope:       "*"
+      clientConfig:
+        service:
+          name: "cassandradatacenter-webhook-service"
+          namespace: "cass-operator"
+          path: /validate-cassandra-datastax-com-v1beta1-cassandradatacenter
+      admissionReviewVersions: ["v1beta1"]
+      failurePolicy: "Ignore"
+      matchPolicy: "Equivalent"
+      sideEffects: None
+      timeoutSeconds: 10
+    ```
+
+    ### WebHook Service
+
+    ```
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: cassandradatacenter-webhook-service
+      labels:
+        name: cass-operator-webhook
+    spec:
+      ports:
+      - port: 443
+        targetPort: 443
+      selector:
+        name: cass-operator
+    ```
   displayName: DataStax Kubernetes Operator for Apache Cassandra
   icon:
-    - base64data: >-
-        PHN2ZyBpZD0iZjM5NDE5ODctOTk4Ni00ODliLTlkYmQtYWY3ZTMwMjc1NmFhIiBkYXRhLW5hbWU9
-        IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAw
-        IDgwIDgwIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmIyYzA3Njg0LTk4YmQtNDY1My05
-        NWQ5LTRiMDMyMTBmZWIwNSB7CiAgICAgICAgZmlsbDogIzAwNTVhYjsKICAgICAgfQoKICAgICAg
-        LmZlMmUyOGVhLTczNzctNGUwNy05NDdmLWZlZTIxZDQzNjQwNCB7CiAgICAgICAgZmlsbDogIzFm
-        MjQzODsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGc+CiAgICA8cGF0aCBjbGFz
-        cz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJNNTIuNTgsNDUuNTFh
-        Ni4zNSw2LjM1LDAsMSwwLDYuMTktNi40NkE2LjMzLDYuMzMsMCwwLDAsNTIuNTgsNDUuNTFaIi8+
-        CiAgICA8cGF0aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBk
-        PSJNMjYuNjQsMTUuMmE2LjM1LDYuMzUsMCwxLDAsNi4xOS02LjQ2QTYuMzMsNi4zMywwLDAsMCwy
-        Ni42NCwxNS4yWiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1My05NWQ5LTRi
-        MDMyMTBmZWIwNSIgZD0iTTExLjI5LDEwLjc0YTQuOTIsNC45MiwwLDEsMCw0LjgtNUE0LjksNC45
-        LDAsMCwwLDExLjI5LDEwLjc0WiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1
-        My05NWQ5LTRiMDMyMTBmZWIwNSIgZD0iTTUyLjQ4LDYxLjU4QTQuNSw0LjUsMCwxLDAsNTYuODcs
-        NTcsNC40OCw0LjQ4LDAsMCwwLDUyLjQ4LDYxLjU4WiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3
-        Njg0LTk4YmQtNDY1My05NWQ5LTRiMDMyMTBmZWIwNSIgZD0iTTQyLjU2LDY3Ljg2YTIuNjUsMi42
-        NSwwLDEsMCwyLjU4LTIuN0EyLjY0LDIuNjQsMCwwLDAsNDIuNTYsNjcuODZaIi8+CiAgICA8cGF0
-        aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJNMi43Mywx
-        OC4xYTIuOTIsMi45MiwwLDEsMCwyLjg1LTNBMi45LDIuOSwwLDAsMCwyLjczLDE4LjFaIi8+CiAg
-        ICA8cGF0aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJN
-        Mi4zOSwyOS41M2EyLjI5LDIuMjksMCwxLDAsMi4yMy0yLjMyQTIuMjksMi4yOSwwLDAsMCwyLjM5
-        LDI5LjUzWiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1My05NWQ5LTRiMDMy
-        MTBmZWIwNSIgZD0iTTQxLDI4LjIzYTcuOTQsNy45NCwwLDEsMCw3Ljc0LTguMDhBNy45Miw3Ljky
-        LDAsMCwwLDQxLDI4LjIzWiIvPgogIDwvZz4KICA8cGF0aCBjbGFzcz0iZmUyZTI4ZWEtNzM3Ny00
-        ZTA3LTk0N2YtZmVlMjFkNDM2NDA0IiBkPSJNMzUuNzEsNjAuNDgsMjYuNDQsNTJsOS4yMi05LjIz
-        YTIuMzYsMi4zNiwwLDAsMCwuNDMtMi41NiwyLjM4LDIuMzgsMCwwLDAtMy44OC0uNzJsLTkuMTMs
-        OS4xNi05LjMxLTkuM2EyLjM3LDIuMzcsMCwwLDAtMS42OC0uNywyLjQyLDIuNDIsMCwwLDAtMi4y
-        LDEuNDcsMi4zMiwyLjMyLDAsMCwwLC41MywyLjU3TDE5LjcyLDUybC05LjE1LDkuMTVBMi4zNCwy
-        LjM0LDAsMCwwLDEwLDYzLjc3YTIuNDIsMi40MiwwLDAsMCwyLjE5LDEuNDYsMi4zOSwyLjM5LDAs
-        MCwwLDEuNjgtLjdsOS4xOS05LjE5LDkuMjYsOC41MWEyLjM4LDIuMzgsMCwwLDAsMS42OC43MSwy
-        LjM4LDIuMzgsMCwwLDAsMS42Ny00LjA4WiIvPgogIDxwYXRoIGNsYXNzPSJmZTJlMjhlYS03Mzc3
-        LTRlMDctOTQ3Zi1mZWUyMWQ0MzY0MDQiIGQ9Ik02Ni4xMyw2NmE2LDYsMCwwLDEsMS4yOS0xLjg3
-        LDYuMTQsNi4xNCwwLDAsMSwxLjkxLTEuMjUsNiw2LDAsMCwxLDIuMzItLjQ2LDYsNiwwLDAsMSw0
-        LjE5LDEuNzFBNiw2LDAsMCwxLDc3LjEzLDY2YTUuNyw1LjcsMCwwLDEsLjQ4LDIuMzQsNS44NSw1
-        Ljg1LDAsMCwxLS40OCwyLjM4LDYuMjIsNi4yMiwwLDAsMS0xLjI5LDEuODlBNS45Myw1LjkzLDAs
-        MCwxLDc0LDczLjgyYTYuMTEsNi4xMSwwLDAsMS0yLjMuNDQsNi4yMiw2LjIyLDAsMCwxLTIuMzIt
-        LjQ0LDYuMTQsNi4xNCwwLDAsMS0xLjkxLTEuMjUsNi4yMiw2LjIyLDAsMCwxLTEuMjktMS44OSw1
-        Ljg1LDUuODUsMCwwLDEtLjQ4LTIuMzhBNS43LDUuNywwLDAsMSw2Ni4xMyw2NlptMSw0LjM3YTQu
-        ODMsNC44MywwLDAsMCwxLDEuNjFBNC41Nyw0LjU3LDAsMCwwLDY5LjcsNzNhNC44NSw0Ljg1LDAs
-        MCwwLDIsLjM5QTQuNzQsNC43NCwwLDAsMCw3My41Nyw3M2E0LjYzLDQuNjMsMCwwLDAsMS41NS0x
-        LjA3LDUsNSwwLDAsMCwxLTEuNjEsNS4zOSw1LjM5LDAsMCwwLC4zOC0yLDUuMjYsNS4yNiwwLDAs
-        MC0uMzgtMiw0Ljc3LDQuNzcsMCwwLDAtMi41OC0yLjY2LDQuNzQsNC43NCwwLDAsMC0xLjkyLS4z
-        OSw0Ljg4LDQuODgsMCwwLDAtMy41MSwxLjQ1LDQuNzgsNC43OCwwLDAsMC0xLDEuNiw1LjI2LDUu
-        MjYsMCwwLDAtLjM4LDJBNS4zOSw1LjM5LDAsMCwwLDY3LjExLDcwLjMzWk03Miw2NC44NWEyLjg1
-        LDIuODUsMCwwLDEsMS44NC40OSwxLjgzLDEuODMsMCwwLDEsLjU5LDEuNSwxLjY4LDEuNjgsMCww
-        LDEtLjUyLDEuMzcsMi4zNywyLjM3LDAsMCwxLTEuMy41MmwyLDMuMDdINzMuNDRsLTEuODktM0g3
-        MC40MXYzSDY5LjMydi03Wm0tLjQ4LDMuMDhjLjI1LDAsLjQ4LDAsLjcsMGEyLjA2LDIuMDYsMCww
-        LDAsLjU4LS4xMy45MS45MSwwLDAsMCwuNC0uMzUsMS4xNywxLjE3LDAsMCwwLC4xNS0uNjQsMSwx
-        LDAsMCwwLS4xMy0uNTYuODcuODcsMCwwLDAtLjM1LS4zMSwxLjU1LDEuNTUsMCwwLDAtLjUtLjE2
-        LDQuOSw0LjksMCwwLDAtLjU0LDBINzAuNDF2Mi4yMVoiLz4KPC9zdmc+Cg==
-      mediatype: image/svg+xml
+  - base64data: PHN2ZyBpZD0iZjM5NDE5ODctOTk4Ni00ODliLTlkYmQtYWY3ZTMwMjc1NmFhIiBkYXRhLW5hbWU9
+      IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAw
+      IDgwIDgwIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmIyYzA3Njg0LTk4YmQtNDY1My05
+      NWQ5LTRiMDMyMTBmZWIwNSB7CiAgICAgICAgZmlsbDogIzAwNTVhYjsKICAgICAgfQoKICAgICAg
+      LmZlMmUyOGVhLTczNzctNGUwNy05NDdmLWZlZTIxZDQzNjQwNCB7CiAgICAgICAgZmlsbDogIzFm
+      MjQzODsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGc+CiAgICA8cGF0aCBjbGFz
+      cz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJNNTIuNTgsNDUuNTFh
+      Ni4zNSw2LjM1LDAsMSwwLDYuMTktNi40NkE2LjMzLDYuMzMsMCwwLDAsNTIuNTgsNDUuNTFaIi8+
+      CiAgICA8cGF0aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBk
+      PSJNMjYuNjQsMTUuMmE2LjM1LDYuMzUsMCwxLDAsNi4xOS02LjQ2QTYuMzMsNi4zMywwLDAsMCwy
+      Ni42NCwxNS4yWiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1My05NWQ5LTRi
+      MDMyMTBmZWIwNSIgZD0iTTExLjI5LDEwLjc0YTQuOTIsNC45MiwwLDEsMCw0LjgtNUE0LjksNC45
+      LDAsMCwwLDExLjI5LDEwLjc0WiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1
+      My05NWQ5LTRiMDMyMTBmZWIwNSIgZD0iTTUyLjQ4LDYxLjU4QTQuNSw0LjUsMCwxLDAsNTYuODcs
+      NTcsNC40OCw0LjQ4LDAsMCwwLDUyLjQ4LDYxLjU4WiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3
+      Njg0LTk4YmQtNDY1My05NWQ5LTRiMDMyMTBmZWIwNSIgZD0iTTQyLjU2LDY3Ljg2YTIuNjUsMi42
+      NSwwLDEsMCwyLjU4LTIuN0EyLjY0LDIuNjQsMCwwLDAsNDIuNTYsNjcuODZaIi8+CiAgICA8cGF0
+      aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJNMi43Mywx
+      OC4xYTIuOTIsMi45MiwwLDEsMCwyLjg1LTNBMi45LDIuOSwwLDAsMCwyLjczLDE4LjFaIi8+CiAg
+      ICA8cGF0aCBjbGFzcz0iYjJjMDc2ODQtOThiZC00NjUzLTk1ZDktNGIwMzIxMGZlYjA1IiBkPSJN
+      Mi4zOSwyOS41M2EyLjI5LDIuMjksMCwxLDAsMi4yMy0yLjMyQTIuMjksMi4yOSwwLDAsMCwyLjM5
+      LDI5LjUzWiIvPgogICAgPHBhdGggY2xhc3M9ImIyYzA3Njg0LTk4YmQtNDY1My05NWQ5LTRiMDMy
+      MTBmZWIwNSIgZD0iTTQxLDI4LjIzYTcuOTQsNy45NCwwLDEsMCw3Ljc0LTguMDhBNy45Miw3Ljky
+      LDAsMCwwLDQxLDI4LjIzWiIvPgogIDwvZz4KICA8cGF0aCBjbGFzcz0iZmUyZTI4ZWEtNzM3Ny00
+      ZTA3LTk0N2YtZmVlMjFkNDM2NDA0IiBkPSJNMzUuNzEsNjAuNDgsMjYuNDQsNTJsOS4yMi05LjIz
+      YTIuMzYsMi4zNiwwLDAsMCwuNDMtMi41NiwyLjM4LDIuMzgsMCwwLDAtMy44OC0uNzJsLTkuMTMs
+      OS4xNi05LjMxLTkuM2EyLjM3LDIuMzcsMCwwLDAtMS42OC0uNywyLjQyLDIuNDIsMCwwLDAtMi4y
+      LDEuNDcsMi4zMiwyLjMyLDAsMCwwLC41MywyLjU3TDE5LjcyLDUybC05LjE1LDkuMTVBMi4zNCwy
+      LjM0LDAsMCwwLDEwLDYzLjc3YTIuNDIsMi40MiwwLDAsMCwyLjE5LDEuNDYsMi4zOSwyLjM5LDAs
+      MCwwLDEuNjgtLjdsOS4xOS05LjE5LDkuMjYsOC41MWEyLjM4LDIuMzgsMCwwLDAsMS42OC43MSwy
+      LjM4LDIuMzgsMCwwLDAsMS42Ny00LjA4WiIvPgogIDxwYXRoIGNsYXNzPSJmZTJlMjhlYS03Mzc3
+      LTRlMDctOTQ3Zi1mZWUyMWQ0MzY0MDQiIGQ9Ik02Ni4xMyw2NmE2LDYsMCwwLDEsMS4yOS0xLjg3
+      LDYuMTQsNi4xNCwwLDAsMSwxLjkxLTEuMjUsNiw2LDAsMCwxLDIuMzItLjQ2LDYsNiwwLDAsMSw0
+      LjE5LDEuNzFBNiw2LDAsMCwxLDc3LjEzLDY2YTUuNyw1LjcsMCwwLDEsLjQ4LDIuMzQsNS44NSw1
+      Ljg1LDAsMCwxLS40OCwyLjM4LDYuMjIsNi4yMiwwLDAsMS0xLjI5LDEuODlBNS45Myw1LjkzLDAs
+      MCwxLDc0LDczLjgyYTYuMTEsNi4xMSwwLDAsMS0yLjMuNDQsNi4yMiw2LjIyLDAsMCwxLTIuMzIt
+      LjQ0LDYuMTQsNi4xNCwwLDAsMS0xLjkxLTEuMjUsNi4yMiw2LjIyLDAsMCwxLTEuMjktMS44OSw1
+      Ljg1LDUuODUsMCwwLDEtLjQ4LTIuMzhBNS43LDUuNywwLDAsMSw2Ni4xMyw2NlptMSw0LjM3YTQu
+      ODMsNC44MywwLDAsMCwxLDEuNjFBNC41Nyw0LjU3LDAsMCwwLDY5LjcsNzNhNC44NSw0Ljg1LDAs
+      MCwwLDIsLjM5QTQuNzQsNC43NCwwLDAsMCw3My41Nyw3M2E0LjYzLDQuNjMsMCwwLDAsMS41NS0x
+      LjA3LDUsNSwwLDAsMCwxLTEuNjEsNS4zOSw1LjM5LDAsMCwwLC4zOC0yLDUuMjYsNS4yNiwwLDAs
+      MC0uMzgtMiw0Ljc3LDQuNzcsMCwwLDAtMi41OC0yLjY2LDQuNzQsNC43NCwwLDAsMC0xLjkyLS4z
+      OSw0Ljg4LDQuODgsMCwwLDAtMy41MSwxLjQ1LDQuNzgsNC43OCwwLDAsMC0xLDEuNiw1LjI2LDUu
+      MjYsMCwwLDAtLjM4LDJBNS4zOSw1LjM5LDAsMCwwLDY3LjExLDcwLjMzWk03Miw2NC44NWEyLjg1
+      LDIuODUsMCwwLDEsMS44NC40OSwxLjgzLDEuODMsMCwwLDEsLjU5LDEuNSwxLjY4LDEuNjgsMCww
+      LDEtLjUyLDEuMzcsMi4zNywyLjM3LDAsMCwxLTEuMy41MmwyLDMuMDdINzMuNDRsLTEuODktM0g3
+      MC40MXYzSDY5LjMydi03Wm0tLjQ4LDMuMDhjLjI1LDAsLjQ4LDAsLjcsMGEyLjA2LDIuMDYsMCww
+      LDAsLjU4LS4xMy45MS45MSwwLDAsMCwuNC0uMzUsMS4xNywxLjE3LDAsMCwwLC4xNS0uNjQsMSwx
+      LDAsMCwwLS4xMy0uNTYuODcuODcsMCwwLDAtLjM1LS4zMSwxLjU1LDEuNTUsMCwwLDAtLjUtLjE2
+      LDQuOSw0LjksMCwwLDAtLjU0LDBINzAuNDF2Mi4yMVoiLz4KPC9zdmc+Cg==
+    mediatype: image/svg+xml
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resourceNames:
+          - cassandradatacenter-webhook-registration
+          resources:
+          - validatingwebhookconfigurations
+          verbs:
+          - create
+          - get
+          - update
+        serviceAccountName: cass-operator-cluster-role
       deployments:
       - name: cass-operator
         spec:
@@ -426,8 +497,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cass-operator
                 - name: SKIP_VALIDATING_WEBHOOK
-                  value: "TRUE"
-                image: registry.connect.redhat.com/datastax/cass-operator:1.0.0
+                  value: "FALSE"
+                image: registry.connect.redhat.com/datastax/cass-operator:1.1.0
                 imagePullPolicy: IfNotPresent
                 livenessProbe:
                   exec:
@@ -449,7 +520,15 @@ spec:
                   periodSeconds: 5
                   timeoutSeconds: 5
                 resources: {}
+                volumeMounts:
+                  - mountPath: /tmp/k8s-webhook-server/serving-certs
+                    name: cass-operator-certs-volume
+                    readOnly: false
               serviceAccountName: cass-operator
+              volumes:
+                - name: cass-operator-certs-volume
+                  secret:
+                    secretName: cass-operator-webhook-config
       permissions:
       - rules:
         - apiGroups:
@@ -524,27 +603,28 @@ spec:
   - supported: false
     type: AllNamespaces
   keywords:
-    - DataStax Enterprise
-    - Apache Cassandra
-    - DSE
-    - C*
-    - Cassandra
+  - DataStax Enterprise
+  - Apache Cassandra
+  - DSE
+  - C*
+  - Cassandra
   links:
-    - name: DataStax
-      url: https://datastax.com
-    - name: Operator GitHub Repo
-      url: https://github.com/datastax/cass-operator
-    - name: Config Builder GitHub Repo
-      url: https://github.com/datastax/cass-config-builder
-    - name: Documentation [1]
-      url: https://github.com/datastax/cass-operator/tree/master/docs/user
-    - name: Documentation [2]
-      url: https://docs.datastax.com/en/cass-operator/doc/cass-operator/cassOperatorTOC.html
+  - name: DataStax
+    url: https://datastax.com
+  - name: Operator GitHub Repo
+    url: https://github.com/datastax/cass-operator
+  - name: Config Builder GitHub Repo
+    url: https://github.com/datastax/cass-config-builder
+  - name: Documentation [1]
+    url: https://github.com/datastax/cass-operator/tree/master/docs/user
+  - name: Documentation [2]
+    url: https://docs.datastax.com/en/cass-operator/doc/cass-operator/cassOperatorTOC.html
   maintainers:
-    - name: DataStax Operator Team
-      email: cass-operator@datastax.com
+  - email: cass-operator@datastax.com
+    name: DataStax Operator Team
   maturity: stable
   minKubeVersion: 1.13.0
-  provider: 
+  provider:
     name: DataStax
-  version: 1.0.0
+  replaces: cass-operator.v1.0.0
+  version: 1.1.0

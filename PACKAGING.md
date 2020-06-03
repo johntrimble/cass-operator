@@ -8,6 +8,11 @@ Currently the OperatorHub.io website generates a slightly different version of t
 
 You should to use the [Package Builder](https://operatorhub.io/packages) to assist in generating complete files.
 
+### Unsupported Resource Types
+1. Namespace
+2. Secret
+3. ValidatingWebhookConfiguration
+
 ## Create CSV (no previous version)
 
 Generate Cluster Service Version (CSV)
