@@ -1,17 +1,31 @@
+# Note the structure below is intentional to avoid unnecessary warnings
 scorecard:
-  # Setting a global scorecard option
-  output: json
+  bundle: deploy/olm-catalog/cass-operator
   plugins:
-    # `basic` tests configured to test 2 CRs
-    # - basic:
-    #     cr-manifest:
-    #       - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
-    #       - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+    # Basic CR Tests
+    - basic:
+        cr-manifest:
+          - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
+    - basic:
+        cr-manifest:
+          - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
     
-    # OLM tests may only test one CR
+    # v1.0.0
     - olm:
         cr-manifest:
           - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
-          # - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+        csv-path: "deploy/olm-catalog/cass-operator/1.0.0/cass-operator.v1.0.0.clusterserviceversion.yaml"
+    - olm:
+        cr-manifest:
+          - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+        csv-path: "deploy/olm-catalog/cass-operator/1.0.0/cass-operator.v1.0.0.clusterserviceversion.yaml"
+    
+    # v1.1.0
+    - olm:
+        cr-manifest:
+          - "example-cassdc-yaml/cassandra-3.11.6/example-cassdc-scorecard.yaml"
         csv-path: "deploy/olm-catalog/cass-operator/1.1.0/cass-operator.v1.1.0.clusterserviceversion.yaml"
-        
+    - olm:
+        cr-manifest:
+          - "example-cassdc-yaml/dse-6.8.0/example-cassdc-scorecard.yaml"
+        csv-path: "deploy/olm-catalog/cass-operator/1.1.0/cass-operator.v1.1.0.clusterserviceversion.yaml"

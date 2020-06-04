@@ -3,7 +3,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: >-
-      [{"apiVersion": "cassandra.datastax.com/v1beta1","kind": "CassandraDatacenter","metadata": {"name": "dc1"},"spec": {"clusterName": "cluster1","size": 3,"racks": [{"name": "rack1","zone": "us-central1-a"},{"name": "rack2","zone": "us-central1-b"},{"name": "rack3","zone": "us-central1-c"}],"resources": {"requests": {"memory": "24Gi","cpu": "6000m"},"limits": {"memory": "24Gi","cpu": "6000m"}},"storageConfig": {"cassandraDataVolumeClaimSpec": {"storageClassName": "server-storage","accessModes": ["ReadWriteOnce"],"resources": {"requests": {"storage": "1000Gi"}}}},"allowMultipleNodesPerWorker": false,"stopped": false,"rollingRestartRequested": false,"canaryUpgrade": false,"serverType": "dse","serverVersion": "6.8.0","serverImage": "registry.connect.redhat.com/datastax/dse-server:6.8.0","configBuilderImage": "registry.connect.redhat.com/datastax/cass-config-builder:1.0.0","superuserSecretName": "","managementApiAuth": {"insecure": {}},"serviceAccount": "default","replaceNodes": []}}]
+      [{"apiVersion": "cassandra.datastax.com/v1beta1","kind": "CassandraDatacenter","metadata": {"name": "dc1"},"spec": {"clusterName": "cluster1","size": 3,"racks": [{"name": "rack1","zone": "us-central1-a"},{"name": "rack2","zone": "us-central1-b"},{"name": "rack3","zone": "us-central1-c"}],"resources": {"requests": {"memory": "24Gi","cpu": "6000m"},"limits": {"memory": "24Gi","cpu": "6000m"}},"storageConfig": {"cassandraDataVolumeClaimSpec": {"storageClassName": "server-storage","accessModes": ["ReadWriteOnce"],"resources": {"requests": {"storage": "1000Gi"}}}},"allowMultipleNodesPerWorker": false,"stopped": false,"rollingRestartRequested": false,"canaryUpgrade": false,"serverType": "dse","serverVersion": "6.8.0","serverImage": "registry.connect.redhat.com/datastax/dse-server:6.8.0","configBuilderImage": "registry.connect.redhat.com/datastax/cass-config-builder:1.0.0","superuserSecretName": "","managementApiAuth": {"insecure": {}},"serviceAccount": "default"}}]
     categories: Database,Big Data,OpenShift Optional
     description: >
       Simple provisioning, turn-key operations, and automated remediation of
@@ -258,6 +258,11 @@ spec:
             description: |
               Configuration for connectivity between cass-operator and Management API
             displayName: Management API Authentication
+          
+          - path: replaceNodes
+            description: |
+              A list of pod names that need to be replaced
+            displayName: Replace Nodes
           
         statusDescriptors:
           - path: cassandraOperatorProgress
