@@ -13,7 +13,7 @@ metadata:
     capabilities: Auto Pilot
     repository: 'https://github.com/datastax/cass-operator'
     createdAt: "2020-03-31"
-    certified: "false"
+    certified: "true"
   name: cass-operator.v1.0.0
   namespace: placeholder
 spec:

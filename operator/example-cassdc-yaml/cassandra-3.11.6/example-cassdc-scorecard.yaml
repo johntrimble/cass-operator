@@ -21,3 +21,9 @@ spec:
       storageClassName: local-storage
   managementApiAuth:
     insecure: {}
+  config:
+    jvm-options:
+      initial_heap_size: "600M"
+      max_heap_size: "600M"
+  serverImage: datastax/cassandra:3.11.6-ubi7
+  configBuilderImage: datastax/cass-config-builder:1.0.0-ubi7

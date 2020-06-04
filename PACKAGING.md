@@ -12,6 +12,7 @@ You should to use the [Package Builder](https://operatorhub.io/packages) to assi
 1. Namespace
 2. Secret
 3. ValidatingWebhookConfiguration
+4. Service
 
 ## Create CSV (no previous version)
 
@@ -64,3 +65,7 @@ operator-sdk generate csv --operator-name cass-operator --csv-version 1.1.0 --ma
 https://github.com/openshift/console/blob/master/frontend/packages/operator-lifecycle-manager/src/components/descriptors/reference/reference.md
 
 ## Validating Operator SDK Manifests
+
+```bash
+operator-sdk scorecard
+```
