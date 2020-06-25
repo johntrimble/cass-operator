@@ -507,9 +507,9 @@ spec:
                     - pgrep
                     - .*operator
                   failureThreshold: 3
-                  initialDelaySeconds: 5
-                  periodSeconds: 5
-                  timeoutSeconds: 5
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 30
                 name: cass-operator
                 readinessProbe:
                   exec:
@@ -517,15 +517,13 @@ spec:
                     - stat
                     - /tmp/operator-sdk-ready
                   failureThreshold: 1
-                  initialDelaySeconds: 5
-                  periodSeconds: 5
-                  timeoutSeconds: 5
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 30
                 resources: {}
                 securityContext:
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: true
-                  runAsGroup: 0
-                  runAsUser: 999
                 volumeMounts:
                 - mountPath: /tmp/k8s-webhook-server/serving-certs
                   name: cass-operator-certs-volume
