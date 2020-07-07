@@ -55,6 +55,6 @@ RUN touch /var/lib/cass-operator/base_os
 WORKDIR /go
 
 # All we need from the builder image is operator executable
-COPY --from=builder /cass-operator/build/bin/cass-operator-linux-amd64 bin/operator
+COPY --from=builder /cass-operator/build/bin/cass-operator-linux-* bin/operator
 
 CMD [ "/go/bin/operator" ]
