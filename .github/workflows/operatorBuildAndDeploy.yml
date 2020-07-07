@@ -6,9 +6,6 @@ jobs:
   build_operator_docker:
     name: Build Cass Operator Docker Image
     runs-on: ubuntu-latest
-    env:
-      GOPATH: /home/runner/go
-      GOROOT: /usr/local/go1.13
     steps:
       - uses: actions/checkout@v2
       - name: Setup Buildx
