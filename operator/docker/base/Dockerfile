@@ -10,9 +10,10 @@ FROM golang:1.13-stretch as builder
 ENV CGO_ENABLED=0
 ENV GOPROXY=https://proxy.golang.org,https://gocenter.io,direct
 
+ARG TARGETARCH
 # Target os and arch
 ENV GOOS linux
-ENV GOARCH amd64
+ENV GOARCH=$TARGETARCH
 ENV GOPATH=/go
 
 
