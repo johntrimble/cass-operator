@@ -1,0 +1,28 @@
+apiVersion: cassandra.datastax.com/v1beta1
+kind: CassandraDatacenter
+metadata:
+  name: dc1
+  namespace: cass-operator
+spec:
+  clusterName: cluster1
+  serverType: cassandra
+  serverVersion: "3.11.6"
+  serverImage: "johntrimble/cassandra-mgmtapi-multiarch:3.11.6"
+  configBuilderImage: "johntrimble/cass-config-builder-multiarch:latest"
+  managementApiAuth:
+    insecure: {}
+  size: 1
+  storageConfig:
+      cassandraDataVolumeClaimSpec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 500Mi
+  racks:
+    - name: r1
+  config:
+    jvm-options:
+      initial_heap_size: "800m"
+      max_heap_size: "800m"
